@@ -1,0 +1,14 @@
+{
+  "name": "hls-player",
+  "version": "1.0.0",
+  "description": "hls video player",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Olaniyi Olamide",
+  "license": "ISC",
+  "dependencies": {
+    "hls.js": "^1.4.12"
+  }
+}

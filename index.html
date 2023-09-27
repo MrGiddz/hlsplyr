@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <title>Video Player</title>
+    <style>
+      .plyr__control--overlaid {
+        background: #4d2456;
+      }
+
+      button.plyr__controls__item.plyr__control:hover {
+        background: #fbbe07;
+      }
+
+      .plyr--video .plyr__control:focus-visible,
+      .plyr--video .plyr__control:hover,
+      .plyr--video .plyr__control[aria-expanded="true"] {
+        background: #fbbe07;
+      }
+
+      .plyr__controls__item.plyr__volume input {
+        color: #fbbe07;
+      }
+
+      .plyr__progress input[type="range"] {
+        color: rgb(251, 190, 7);
+      }
+
+      .plyr__menu__container
+        .plyr__control[role="menuitemradio"][aria-checked="true"]:before {
+        background: rgb(251, 190, 7);
+      }
+    </style>
+  </head>
+  <body>
+    <div style="height: 400px">
+      <video controls id="player">
+        <track
+          label="Yoruba"
+          kind="captions"
+          srclang="yo"
+          src="assets/srt/Homeostasis 1 - Biology - SS3 .vtt"
+        />
+        <track
+          label="Hausa" 
+          kind="captions"
+          srclang="ha"
+          src="assets/srt/Homeostasis 1 - Biology - SS3 .vtt"
+        />
+        <track
+          label="Igbo"
+          kind="captions"
+          srclang="ig"
+          src="assets/srt/Homeostasis 1 - Biology - SS3 .vtt"
+        />
+        <track
+          label="French"
+          kind="captions"
+          srclang="fr"
+          lang="fr"
+          src="assets/srt/Homeostasis 1 - Biology - SS3 .vtt"
+        />
+        <track
+          label="English"
+          kind="captions"
+          srclang="en"
+          src="assets/srt/Homeostasis 1 - Biology - SS3 .vtt"
+          default
+        />
+      </video>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        let video = document.querySelector("#player");
+        let playBtn = document.querySelector(".plyr__controls__item.plyr__control.plyr__control--pressed")
+
+        const videoQualities = [240, 360, 480, 720, 1080];
+
+        const qualityLevels = {
+          240: "https://exampadi.s3.us-east-2.amazonaws.com/S7VM6rf6LZT0PhwuK-3MV/other/240/848edae8f63f.mp4.m3u8",
+          360: "https://exampadi.s3.us-east-2.amazonaws.com/S7VM6rf6LZT0PhwuK-3MV/other/360/848edae8f63f.mp4.m3u8",
+          480: "https://exampadi.s3.us-east-2.amazonaws.com/S7VM6rf6LZT0PhwuK-3MV/other/480/848edae8f63f.mp4.m3u8",
+          720: "https://exampadi.s3.us-east-2.amazonaws.com/S7VM6rf6LZT0PhwuK-3MV/other/720/848edae8f63f.mp4.m3u8",
+          1080: "https://exampadi.s3.us-east-2.amazonaws.com/S7VM6rf6LZT0PhwuK-3MV/other/1080/848edae8f63f.mp4.m3u8",
+        };
+
+        const defaultOptions = {};
+        let source = qualityLevels[240];
+        let player = null,
+          isPlaying = false,
+          currentTime = null;
+
+        if (Hls.isSupported()) {
+          const hls = new Hls();
+          console.log({ hls });
+          hls.loadSource(source);
+          hls.on(Hls.Events.MANIFEST_PARSED, function (event, data) {
+            const availableQualities = hls.levels.map((l) => l.height);
+            defaultOptions.controls = [
+              "play-large",
+              "restart",
+              "rewind",
+              "play",
+              "fast-forward",
+              "progress",
+              "current-time",
+              "duration",
+              "mute",
+              "volume",
+              "captions",
+              "settings",
+              "pip",
+              "airplay",
+              "fullscreen",
+            ];
+
+            defaultOptions.quality = {
+              default: qualityLevels[0],
+              options: videoQualities,
+              forced: true,
+              onChange: (newQuality) => updateQuality(newQuality),
+            };
+
+            defaultOptions.captions = {
+              active: true,
+              language: "en",
+              //   update: false,
+              onChange: (newQuality) => {
+                console.log(newQuality);
+              },
+            };
+
+            player = new Plyr(video, defaultOptions);
+
+            function updateQuality(newQuality) {
+              if (qualityLevels[newQuality]) {
+                hls.loadSource(qualityLevels[newQuality]);
+                hls.attachMedia(video);
+              }
+            }
+          });
+          hls.attachMedia(video);
+          window.hls = hls;
+
+          video.addEventListener("qualitychange", (e) => {
+            console.log({ e, timeStamp: e.timeStamp / 1000 });
+            const player = e.detail.plyr;
+            player.play();
+
+            player.currentTime = e.timeStamp / 1000;
+          });
+
+          video.addEventListener("ready", (event) => {
+            const player = event.detail.plyr;
+
+            document.addEventListener("keydown", (e) => {
+              switch (e.code) {
+                case "Space":
+                  console.log({ e });
+                  player.on("play", (e) => {
+                    console.log({ e });
+                  });
+                  player.off("play");
+                  player.togglePlay();
+                  break;
+                case "ArrowUp":
+                  e.ctrlKey && player.increaseVolume(0.05);
+                  break;
+                case "ArrowDown":
+                  e.ctrlKey && player.decreaseVolume(0.05);
+                  break;
+                case "ArrowLeft":
+                  player.rewind();
+                  break;
+                case "ArrowRight":
+                  player.forward();
+                  break;
+
+                default:
+                  break;
+              }
+            });
+          });
+        }
+      });
+    </script>
+  </body>
+</html>
